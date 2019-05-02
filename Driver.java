@@ -7,6 +7,7 @@ public class Driver {
 		hammDist.setDefaultCloseOperation(3);
 		hammDist.pack();
 		hammDist.setVisible(true);
+		
 	}
 
 }

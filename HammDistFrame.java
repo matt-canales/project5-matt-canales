@@ -4,6 +4,7 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,7 +31,7 @@ public class HammDistFrame extends JFrame implements ChangeListener, ActionListe
 	private JTextField sliderState;
 	
 	private JComboBox selectStation;
-	private String[] stationArray;
+	private String[] stationArray = new String[120];
 	
 	private JTextArea distOutput;
 	private JScrollPane scrollPane;
@@ -47,6 +48,12 @@ public class HammDistFrame extends JFrame implements ChangeListener, ActionListe
 	private JLabel dist4;
 	
 	private JTextField addStationText;
+	
+	HammingDist hammDist;
+	
+	private JLabel currentLabel;
+	private JTextArea currentList;
+	private JScrollPane scrollPane2;
 	
 
 	HammDistFrame()
@@ -71,10 +78,14 @@ public class HammDistFrame extends JFrame implements ChangeListener, ActionListe
 		dist3 = new JLabel("Distance 3");
 		dist4 = new JLabel("Distance 4");
 		
-		distOutput = new JTextArea(10,10);
+		distOutput = new JTextArea(20,20);
 		scrollPane = new JScrollPane(distOutput);
-		distOutput.setEditable(false);		
+		distOutput.setEditable(false);	
 		
+		currentList = new JTextArea(20,20);
+		scrollPane2 = new JScrollPane(currentList);
+		currentList.setEditable(false);
+		currentLabel = new JLabel("All Stations:");
 		
 		output0 = new JTextField(10);		
 		output1 = new JTextField(10);
@@ -102,6 +113,15 @@ public class HammDistFrame extends JFrame implements ChangeListener, ActionListe
 		addStationText.setText("ZERO");
 		addStationText.setEditable(true);		
 		
+		try
+    	{
+    		read();
+    	}
+    	catch(IOException e)
+    	{
+    		System.out.println("Error reading from file!\n");
+    		e.printStackTrace();
+    	}
 		
 		selectStation = new JComboBox(stationArray);		
 		
@@ -126,11 +146,17 @@ public class HammDistFrame extends JFrame implements ChangeListener, ActionListe
 		
 		layout.gridx = 0;
 		layout.gridy = 2;
-		add(showStations, layout);
+		add(showStations, layout);		
+		layout.gridx = 1;
+		layout.gridy = 2;
+		add(currentLabel, layout);
 		
 		layout.gridx = 0;
 		layout.gridy = 3;
-		add(distOutput, layout);
+		add(scrollPane, layout);
+		layout.gridx = 1;
+		layout.gridy = 3;
+		add(scrollPane2, layout);
 		
 		layout.gridx = 0;
 		layout.gridy = 4;
@@ -192,18 +218,68 @@ public class HammDistFrame extends JFrame implements ChangeListener, ActionListe
 		layout.gridy = 11;
 		add(addStationText, layout);
 		
-		
+		hammDist = new HammingDist(selectStation.getSelectedItem().toString());
+		hammDist.calcAllLocationDist();
+		for(int i = 0; i < hammDist.locationList.size(); i++)
+		{
+			currentList.append(hammDist.locationList.get(i) + "\n");
+		}		
 	}
 	
 	public void actionPerformed(ActionEvent e) { 	
 		
 		if(e.getSource() == calcDist){
+			hammDist.location1 = selectStation.getSelectedItem().toString();
+			hammDist.calcAllLocationDist();
+			output0.setText(Integer.toString(hammDist.counterLoc1Dist0));
+			output1.setText(Integer.toString(hammDist.counterLoc1Dist1));
+			output2.setText(Integer.toString(hammDist.counterLoc1Dist2));
+			output3.setText(Integer.toString(hammDist.counterLoc1Dist3));
+			output4.setText(Integer.toString(hammDist.counterLoc1Dist4));
 		     
 		}
 		if(e.getSource() == addStation){
+			hammDist.addLocation(addStationText.getText());	
+			currentList.setText("");
+			for(int i = 0; i < hammDist.locationList.size(); i++)
+			{
+				currentList.append(hammDist.locationList.get(i) + "\n");
+			}			
 		      
 		}
 		if(e.getSource() == showStations){
+			distOutput.setText(null);
+			
+			
+			
+			if(distSlider.getValue() == 1) 
+			{
+				for(int i = 0; i < hammDist.dist1Loc.size(); i++)
+				{
+					distOutput.append(hammDist.dist1Loc.get(i) + "\n");
+				}
+			}
+			else if (distSlider.getValue() == 2) 
+			{
+				for(int i = 0; i < hammDist.dist2Loc.size(); i++)
+				{
+					distOutput.append(hammDist.dist2Loc.get(i) + "\n");
+				}
+			}
+			else if (distSlider.getValue() == 3) 
+			{
+				for(int i = 0; i < hammDist.dist3Loc.size(); i++)
+				{
+					distOutput.append(hammDist.dist3Loc.get(i) + "\n");
+				}
+			}
+			else if (distSlider.getValue() == 4) 
+			{
+				for(int i = 0; i < hammDist.dist4Loc.size(); i++)
+				{
+					distOutput.append(hammDist.dist4Loc.get(i) + "\n");
+				}
+			}
 		
 		}
 		    
@@ -219,20 +295,15 @@ public class HammDistFrame extends JFrame implements ChangeListener, ActionListe
 	}
 
 	
-	private void read()
+	public void read() throws IOException
 	{
 		BufferedReader br = new BufferedReader(new FileReader("Mesonet.txt"));
 		
 		
-		//skip the first three lines, unneeded info
-		br.readLine();
-		br.readLine();
-		br.readLine();
-		
-		//read the next 120 lines into our locationList String array, and shorten them to the 4 character location
+		//read the next 120 lines into our stationArray
 		for(int i = 0; i < 120; i++) 
 		{
-			stationArray[i] = br.readLine().substring(1, 5);
+			stationArray[i] = br.readLine();
 		}
 		
 		br.close();		
